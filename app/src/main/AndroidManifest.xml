@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/ic_launcher_logo"
         android:label="Chiwamba News Awards"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
