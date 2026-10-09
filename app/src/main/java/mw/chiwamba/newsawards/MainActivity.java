@@ -1,22 +1,20 @@
 package mw.chiwamba.newsawards;
 
 import android.app.Activity;
-import android.graphics.Color;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
     private static final String START_URL =
             "https://lloydbandaofficial-cyber.github.io/Chiwamba-news-awards-/";
+    private static final String HOST = "lloydbandaofficial-cyber.github.io";
 
     private WebView webView;
 
@@ -24,53 +22,59 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(48, 120, 48, 48);
-        box.setBackgroundColor(Color.WHITE);
+        webView = new WebView(this);
+        setContentView(webView);
 
-        TextView tv = new TextView(this);
-        tv.setTextSize(22);
-        tv.setTextColor(Color.BLACK);
-        tv.setText("Chiwamba News Awards\n\nThe app is working.");
-        box.addView(tv);
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setLoadWithOverviewMode(true);
+        s.setUseWideViewPort(true);
 
-        Button b = new Button(this);
-        b.setText("Open website");
-        b.setOnClickListener(new View.OnClickListener() {
+        webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onClick(View v) {
-                openSite();
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (HOST.equals(uri.getHost())) {
+                    return false;
+                }
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                } catch (Exception ignored) {
+                }
+                return true;
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request.isForMainFrame()) {
+                    String html = "<html><body style='font-family:sans-serif;text-align:center;padding:48px 24px'>"
+                            + "<h2>No connection</h2>"
+                            + "<p>Please check your internet and try again.</p>"
+                            + "<button style='font-size:18px;padding:12px 24px' "
+                            + "onclick=\"location.href='" + START_URL + "'\">Retry</button>"
+                            + "</body></html>";
+                    view.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
+                }
             }
         });
-        box.addView(b);
 
-        setContentView(box);
-    }
-
-    private void openSite() {
-        try {
-            webView = new WebView(this);
-            WebSettings s = webView.getSettings();
-            s.setJavaScriptEnabled(true);
-            s.setDomStorageEnabled(true);
-            webView.setWebViewClient(new WebViewClient());
-            setContentView(webView);
+        if (savedInstanceState == null) {
             webView.loadUrl(START_URL);
-        } catch (Throwable t) {
-            Log.e("Chiwamba", "WebView error", t);
-            TextView e = new TextView(this);
-            e.setPadding(32, 64, 32, 32);
-            e.setText("WebView error:\n\n" + Log.getStackTraceString(t));
-            ScrollView sv = new ScrollView(this);
-            sv.addView(e);
-            setContentView(sv);
+        } else {
+            webView.restoreState(savedInstanceState);
         }
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        webView.saveState(outState);
+    }
+
+    @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
+        if (webView.canGoBack()) {
             webView.goBack();
         } else {
             super.onBackPressed();
